@@ -1,0 +1,12 @@
+focus
+-----
+
+focus is productivity cli tool,
+it helps track time of sessions.
+Designed to be fast & minimal.
+
+Installation:
+	su -c "./install.sh"
+
+Copyright (c) 2022 fenze <contact@fenze.dev>.
+All rights reserved. See license for more information.
