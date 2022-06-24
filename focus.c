@@ -1,11 +1,12 @@
 #include "focus.h"
-#include <stdio.h>
+#include <stdlib.h>
 
 char *untilde_path(char *path)
 {
-	char *realpath = getenv("HOME");
-	strcat(realpath, ++path);
-	return realpath;
+	path++;
+	char *buf = getenv("HOME");
+	strcat(buf, path);
+	return buf;
 }
 
 void error(int argc, ...)
@@ -40,7 +41,6 @@ int timer_is_paused()
 	return (i % 2) ? 0 : 1;
 }
 
-
 int timer_start()
 {
 	if (!timer_status())
@@ -50,7 +50,7 @@ int timer_start()
 			FILE *fp = fopen(TMPF, "a");
 			fprintf(fp, "%li", time(0));
 			fclose(fp);
-			return 0;
+			return EXIT_SUCCESS;
 		}
 
 		return 1;
@@ -59,7 +59,7 @@ int timer_start()
 	FILE *fp = fopen(TMPF, "w");
 	fprintf(fp, "%li", time(0));
 	fclose(fp);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 int timer_pause()
@@ -106,6 +106,7 @@ int timer_time()
 int timer_stop()
 {
 	char msg[128];
+
 	if (timer_status())
 		return 2;
 
@@ -122,18 +123,18 @@ int timer_stop()
 
 	fgets(msg, 128, fp);
 
-	if (fp)
-		fclose(fp);
+	fclose(fp);
+
 	if (strlen(msg) == 1)
 		return 4;
 
-	char *hist = untilde_path("~/.local/share/focus/history");
+	char *hist = untilde_path("//history");
 
-	fp = fopen(hist, "a");
+	FILE *histf = fopen(hist, "a");
 
-	fprintf(fp, "Title: %sTime:", msg);
+	fprintf(histf, "Title: %sTime:", msg);
 
-	time_t hours, minutes, seconds;
+	time_t hours, minutes, seconds = 0;
 	time_t timer = timer_time();
 
 	timer -= ((hours = timer / 3600)) * 3600;
@@ -141,21 +142,21 @@ int timer_stop()
 	seconds = timer % 60;
 
 	if (hours)
-		fprintf(fp, " %lu hour(s)", hours);
+		fprintf(histf, " %lu hour(s)", hours);
 
 	if (minutes)
-		fprintf(fp, " %lu minute(s)", minutes);
+		fprintf(histf, " %lu minute(s)", minutes);
 
 	if (seconds)
-		fprintf(fp, " %lu second(s)", seconds);
+		fprintf(histf, " %lu second(s)", seconds);
 
-	fputs(".", fp);
+	fputs(".\n", histf);
 
-	fclose(fp);
+	fclose(histf);
 
 	remove(TMPF);
 	remove("/tmp/COMMIT_EDITMSG");
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 int timer_show()
@@ -198,7 +199,13 @@ int timer_show()
 
 	puts(".");
 
-	return 0;
+	return EXIT_SUCCESS;
+}
+
+int show_history()
+{
+
+	return EXIT_SUCCESS;
 }
 
 void help()
@@ -207,11 +214,19 @@ void help()
 			 " start\t\t - starts session");
 }
 
+void setup()
+{
+	char *cachedir = untilde_path("~/.local/share/focus");
+	mkdir(cachedir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+}
+
 int main(int argc, char **argv)
 {
 	argc--; argv++;
 
 	int exit_code = 0;
+
+	setup();
 
 	for (int i = 0; i < argc; i++)
 	{
