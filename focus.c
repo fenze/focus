@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 
 #define TMPF "/tmp/focus_session"
 
@@ -143,16 +144,14 @@ int timer_stop()
 	time_t timer = timer_time();
 
 	timer -= ((hours = timer / 3600)) * 3600;
-	timer -= ((minutes = timer / 60)) * 60;
-	seconds = timer % 60;
-
 	if (hours)
 		fprintf(histf, " %lu hour(s)", hours);
 
+	timer -= ((minutes = timer / 60)) * 60;
 	if (minutes)
 		fprintf(histf, " %lu minute(s)", minutes);
 
-	if (seconds)
+	if ((seconds = timer % 60))
 		fprintf(histf, " %lu second(s)", seconds);
 
 	fputs(".\n", histf);
